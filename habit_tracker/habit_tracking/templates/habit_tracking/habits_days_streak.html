@@ -1,0 +1,20 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>Habits tracking</h2>
+<p>No matter how you measure your improvement, habits tracking offers a simple way to make your habits satisfying.Each measurement provides a little of evidence that you are moving in the right direction</p>
+{% if display is False %}
+<form action="/habit_days_streak/{{encoded_id}}" method="POST">
+    {% csrf_token %}
+    <select name="selected_task">
+        {% for task in all_tasks %}
+        <option>{{task}}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Get the days streak">
+</form>
+{% else %}
+<p>The days streak value of {{task}} is {{days_streak}}</p>
+<p>Home page <a href="/habit_tracking/{{encoded_id}}">here</a></p>
+{% endif %}
+{% endblock %}

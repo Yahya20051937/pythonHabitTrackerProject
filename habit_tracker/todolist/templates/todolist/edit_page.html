@@ -1,0 +1,41 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>ToDoList</h2>
+<h3>{{day}}</h3>
+
+{% load custom_filters %}
+
+<form method="POST" action="/edit_page/{{encoded_id}}">
+    {% csrf_token %}
+<div class="task-table-container">
+    <table class="task-table">
+        <tr>
+            <th>Task</th>
+            <th>Time</th>
+            <th></th>
+
+        </tr>
+        {% for task in tasks %}
+
+            <tr>
+                <th><input type="text" name="{{task.id}}/name" value="{{task.name}}"></th>
+                <th><input type="time" name="{{task.id}}/starting_time" value="{{task.time|extract_starting_time}}"> - <input type="time" name="{{task.id}}/ending_time" value="{{task.time|extract_ending_time}}"> <input type="checkbox" name="skipping_check" value="skip"></th>
+                <th><input type="text" name="{{task.id}}/rate" value="{{task.rate}}"></th>
+                {% if task.bool_check %}
+                    <th>✓</th>
+                {% else %}
+                    <th>❌</th>
+                {% endif %}
+
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+    <input type="submit" value="Save changes">
+
+</form>
+
+
+{% endblock %}

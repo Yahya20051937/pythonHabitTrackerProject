@@ -1,0 +1,25 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>Habits tracking</h2>
+<p>Can one tiny change transform your life? It's unlikely you would say so. But what if you made another, and another, and another? At some point, you will have to admit that your life was transformed by one small change</p>
+{% if display is False %}
+<form action="/habits_performance/{{encoded_id}}" method="POST">
+    {% csrf_token %}
+    <select name="selected_n">
+        {% for n in numbers %}
+        <option>{{n}}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Get the performance graph">
+</form>
+{% else %}
+    <div>
+        <img src="data:image/png;base64, {{image_base64}}" alt="Graph">
+    </div>
+    <div>
+        {{ toolbar }}
+    </div>
+<p>Home page <a href="/habit_tracking/{{encoded_id}}">here</a></p>
+{% endif %}
+{% endblock %}

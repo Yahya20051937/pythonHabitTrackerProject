@@ -1,0 +1,53 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>ToDoList</h2>
+<h3>{{day}}</h3>
+
+
+<form method="POST" action="/add_page/{{encoded_id}}">
+    {% csrf_token %}
+<div class="task-table-container">
+    <table class="task-table">
+        <tr>
+            <th>Task</th>
+            <th>Time</th>
+            <th></th>
+
+        </tr>
+        {% for task in tasks %}
+
+            <tr>
+                <th>{{ task.name }}</th>
+                <th>{{ task.starting_time}} - {{task.ending_time }}</th>
+                {% if task.bool_check %}
+                    <th>✓</th>
+                {% else %}
+                    <th>❌</th>
+                {% endif %}
+
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+</div>
+    <div>
+        <label for="name">Task name:</label>
+        <input type="text" id="name" name="name">
+
+        <label for="starting_time">Starting time: </label>
+        <input type="time" id="starting_time" name="starting_time" value="00:00:00">
+        <div>
+        <label for="ending_time">Starting time: (optional)</label>
+        <input type="checkbox" name="skipping_box" value="skip">
+        <input type="time" id="ending_time" name="ending_time" value="00:00:00">
+        </div>
+
+    </div>
+    <input type="submit" value="Add">
+
+</form>
+
+
+{% endblock %}

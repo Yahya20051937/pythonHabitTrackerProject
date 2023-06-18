@@ -1,0 +1,12 @@
+{% extends 'userath/base.html' %}
+
+
+{% load crispy_forms_tags %}
+{% block content %}
+<h2>Login</h2>
+<form method="Post" action="/register" class="form-group">
+    {% csrf_token %}
+    {{form}}
+    <button type="submit">Sign up</button>
+</form>
+{% endblock %}

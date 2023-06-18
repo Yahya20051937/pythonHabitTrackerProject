@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+
+    .task-table-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 20vh; /* Adjust the height as needed */
+    }
+
+    .task-table {
+        width: 60%;
+        border-collapse: collapse;
+    }
+
+    .task-table th,
+    .task-table td {
+        padding: 15px;
+        border: 1px solid #ccc;
+        text-align: center;
+    }
+
+    .task-checkbox {
+        width: 25px;
+        height: 25px;
+    }
+</style>
+<body>
+
+    <h1>Habit tracker</h1>
+    {% block content %}
+
+    {% endblock %}
+    <h2>Motivation is overrated, often environment matters more</h2>
+</body>
+</html>

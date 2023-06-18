@@ -1,0 +1,39 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>ToDoList</h2>
+<h3>{{day}}</h3>
+
+
+<form method="POST" action="/delete_page/{{encoded_id}}">
+    {% csrf_token %}
+<div class="task-table-container">
+    <table class="task-table">
+        <tr>
+            <th>Task</th>
+            <th>Time</th>
+            <th></th>
+
+        </tr>
+        {% for task in tasks %}
+
+            <tr>
+                <th>{{ task.name }}</th>
+                <th>{{task.time}}</th>
+                {% if task.bool_check %}
+                    <th>✓</th>
+                {% else %}
+                    <th>❌</th>
+                {% endif %}
+                <th><input type="checkbox" name="to_delete" value="{{task.id}}"></th>
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+    <input type="submit" value="Save changes">
+
+</form>
+
+
+{% endblock %}

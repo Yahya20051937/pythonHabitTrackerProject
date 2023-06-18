@@ -1,0 +1,80 @@
+{% extends 'userath/base.html'%}
+
+{% block content %}
+<h2>ToDoList</h2>
+<h3>{{day}}</h3>
+<style>
+    .task-table-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 20vh; /* Adjust the height as needed */
+    }
+
+    .task-table {
+        width: 60%;
+        border-collapse: collapse;
+    }
+
+    .task-table th,
+    .task-table td {
+        padding: 15px;
+        border: 1px solid #ccc;
+        text-align: center;
+    }
+
+    .task-checkbox {
+        width: 25px;
+        height: 25px;
+    }
+</style>
+<form method="POST" action="/user_home_page/{{encoded_id}}">
+    {% csrf_token %}
+<div class="task-table-container">
+    <table class="task-table">
+        <tr>
+            <th>Task</th>
+            <th>Time</th>
+            <th></th>
+
+        </tr>
+        {% for task in tasks %}
+
+            <tr>
+                <th>{{ task.name }}</th>
+
+                <th>{{ task.time}}</th>
+
+
+                {% if task.bool_check %}
+                    <th><input type="checkbox" checked name="bool_check" value="{{task.id}}" class="task-checkbox"></th>
+                {% else %}
+                    <th><input type="checkbox" class="task-checkbox" name="bool_check" value="{{task.id}}"></th>
+                {% endif %}
+
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+    <input type="submit" value="Save changes">
+
+</form>
+
+<form action="/edit_page/{{encoded_id}}">
+    <input type="submit" value="Edit">
+</form>
+
+<form action="/add_page/{{encoded_id}}">
+    <input type="submit" value="Add">
+</form>
+
+<form action="/delete_page/{{encoded_id}}">
+    <input type="submit" value="Delete">
+</form>
+
+<form action="/habit_tracking/{{encoded_id}}">
+    <input type="submit" value="Habits tracking">
+</form>
+<li>Test <a href="/test/{{encoded_id}}">here</a></li>
+
+{% endblock %}
