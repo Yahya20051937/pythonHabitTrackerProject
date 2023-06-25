@@ -1,4 +1,5 @@
 import random, string
+import time
 from manage import logger
 
 encoding_dict = dict()
@@ -34,6 +35,15 @@ def decode(encoded_id):
         t += 25
 
     return int(decoded_id)
+
+
+def get_time(for_url=False):
+    current_time = time.localtime()
+    if not for_url:
+        current_date = f'{current_time.tm_mday}/{current_time.tm_mon}/{str(current_time.tm_year)[2:]}'
+    else:
+        current_date = f'{current_time.tm_mday}_{current_time.tm_mon}_{str(current_time.tm_year)[2:]}'
+    return current_date
 
 
 logger.critical(encode(11))

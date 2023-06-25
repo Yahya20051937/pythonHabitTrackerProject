@@ -1,6 +1,7 @@
 {% extends 'userath/base.html'%}
 
 {% block content %}
+{% load custom_filters %}
 <h2>ToDoList</h2>
 <h3>{{day}}</h3>
 <style>
@@ -27,9 +28,71 @@
         width: 25px;
         height: 25px;
     }
+
+
+
+</style
+>
+
+<style>
+  .perfect {
+    background-color: rgb(0, 0, 255);  /* Blue */
+  }
+  .very_good {
+    background-color: rgb(51, 153, 255);  /* Light Blue */
+  }
+  .good {
+    background-color: rgb(144, 238, 144);  /* Light Green */
+  }
+  .normal {
+    background-color: rgb(255, 255, 255);  /* White */
+  }
+  .bad {
+    background-color: rgb(255, 153, 153);  /* Light Red */
+  }
+  .very_bad {
+    background-color: rgb(255, 51, 51);  /* Red */
+  }
 </style>
-<form method="POST" action="/user_home_page/{{encoded_id}}">
+
+<form method="POST" action="/change_day/{{encoded_id}}">
     {% csrf_token %}
+    <div>
+        <select name="day" >
+            <option value="{{ day|extract_day }}" selected>{{ day|extract_day }}</option>
+            {% for my_day in days_range %}
+                <option value="{{my_day}}">{{ my_day }}</option>
+            {% endfor %}
+
+
+        </select>
+
+        <select name="month" >
+            <option value="{{ day|extract_month }}" selected>{{ day|extract_month }}</option>
+            {% for my_month in month_range %}
+                <option value="{{my_month}}">{{ my_month }}</option>
+            {% endfor %}
+
+
+        </select>
+
+        <select name="year" >
+            <option value="{{ day|extract_year }}" selected>{{ day|extract_year }}</option>
+            {% for my_year in year_range %}
+                <option value="{{my_year}}">20{{ my_year }}</option>
+            {% endfor %}
+
+
+        </select>
+
+    <input type="submit" value="Change day">
+    </div>
+
+</form>
+
+<form method="POST" action="/user_home_page/{{encoded_id}}/{{day}}">
+    {% csrf_token %}
+
 <div class="task-table-container">
     <table class="task-table">
         <tr>
@@ -40,7 +103,7 @@
         </tr>
         {% for task in tasks %}
 
-            <tr>
+            <tr class="{{ task.performance }} ">
                 <th>{{ task.name }}</th>
 
                 <th>{{ task.time}}</th>
@@ -60,15 +123,15 @@
 
 </form>
 
-<form action="/edit_page/{{encoded_id}}">
+<form action="/edit_page/{{encoded_id}}/{{day}}">
     <input type="submit" value="Edit">
 </form>
 
-<form action="/add_page/{{encoded_id}}">
+<form action="/add_page/{{encoded_id}}/{{day}}">
     <input type="submit" value="Add">
 </form>
 
-<form action="/delete_page/{{encoded_id}}">
+<form action="/delete_page/{{encoded_id}}/{{day}}">
     <input type="submit" value="Delete">
 </form>
 

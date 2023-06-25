@@ -2,7 +2,7 @@ import django.db.utils
 from django.shortcuts import render
 import logging, os
 from pathlib import Path
-from .helping_functions import get_time
+from functions import decode, get_time
 
 from django.contrib.auth.models import User
 from django.db import IntegrityError
@@ -20,12 +20,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Create your views here.
 
-def home_page(request, encoded_id):
-    from functions import decode
+def home_page(request, encoded_id, day):
+    from .helping_functions import modify_performance, get_style_tag, transform_underscore_to_slash, \
+        transform_slash_to_underscore
+    from database import DataBaseManagement, edit_info
     decoded_id = decode(encoded_id)
-    day = get_time()
+    day = transform_underscore_to_slash(day)
+    logger.critical(day)
     logger.critical(f'id : {decoded_id}')
     user = User.objects.get(id=decoded_id)
+
     # render a table that has the task of the user for this day
     try:
 
@@ -37,14 +41,19 @@ def home_page(request, encoded_id):
         today_todolist.save()
 
     tasks = list(today_todolist.task_set.all())
+    modify_performance(decoded_id, tasks)
+    style_tag = get_style_tag()  # function provided by CHAT-GPT to style the th tags
 
     if request.method == 'POST':
+
         checked_tasks = request.POST.getlist('bool_check')
-        logger.critical(checked_tasks)
+
         # this code is for checking tasks
         for task_id in checked_tasks:
             task = list(filter(lambda x: x.id == int(task_id), tasks))[0]
             task.bool_check = True
+            with DataBaseManagement(decoded_id) as connection:
+                edit_info(connection, task.name, day)
             task.save()
         # this code is for unchecking tasks
         for task in tasks:
@@ -52,38 +61,51 @@ def home_page(request, encoded_id):
                 task.bool_check = False
                 task.save()
 
+    day = transform_slash_to_underscore(day)
+    logger.critical(day)
     return render(request, 'todolist/home_page.html',
-                  {"day": today_todolist.day, "tasks": tasks, "encoded_id": encoded_id})
+                  {"day": day, "tasks": tasks, "encoded_id": encoded_id,
+                   'style_tag': style_tag,
+                   'days_range': range(1, 32), 'month_range': range(1, 13), 'year_range': range(1, 30)})
 
 
-def delete_page(request, encoded_id):
-    from functions import decode
+def delete_page(request, encoded_id, day):
+    from .helping_functions import transform_underscore_to_slash, transform_slash_to_underscore
+
     decoded_id = decode(encoded_id)
     user = User.objects.get(id=decoded_id)
-    day = get_time()
+    day = transform_underscore_to_slash(day)
     all_todo_lists = list(user.todolist_set.all())
     today_todolist = list(filter(lambda x: x.day == day, all_todo_lists))[0]
     tasks = list(today_todolist.task_set.all())
-
+    day = transform_slash_to_underscore(day)
     if request.method == 'POST':
         tasks_to_delete_ids = request.POST.getlist('to_delete')
         for task_id in tasks_to_delete_ids:
             task = list(filter(lambda x: x.id == int(task_id), tasks))[0]
             task.delete()
-        return redirect(f'/user_home_page/{encoded_id}')
+        return redirect(f'/user_home_page/{encoded_id}/{day}')
     return render(request, 'todolist/delete_page.html',
-                  {"day": today_todolist.day, "tasks": tasks, "encoded_id": encoded_id})
+
+                  {"day": day, "tasks": tasks, "encoded_id": encoded_id})
 
 
-def edit_page(request, encoded_id):
-    from functions import decode
+def edit_page(request, encoded_id, day):
+    from .helping_functions import transform_underscore_to_slash, transform_slash_to_underscore
+    from database import DataBaseManagement, edit_info, get_info
+
     decoded_id = decode(encoded_id)
-    day = get_time()
+    day = transform_underscore_to_slash(day)
     user = User.objects.get(id=decoded_id)
     all_todo_lists = list(user.todolist_set.all())
     today_todolist = list(filter(lambda x: x.day == day, all_todo_lists))[0]
     tasks = list(today_todolist.task_set.all())
 
+    with DataBaseManagement(decoded_id) as conn:   # code to show the rate in the template
+        for task in tasks:
+            task.rate = get_info(conn, task.name, 'rate')
+
+    day = transform_slash_to_underscore(day)
     if request.method == 'POST':
         for task_id in [t.id for t in tasks]:
             task = Task.objects.get(id=task_id)
@@ -99,23 +121,26 @@ def edit_page(request, encoded_id):
             else:
                 task.time = f'{new_starting_time}-'
 
-            new_task_rate = request.POST.get(f'{task_id}/rate')
-            task.rate = int(new_task_rate)
+            new_task_rate = request.POST.get(f'{task_id}/rate') or 1
+            with DataBaseManagement(decoded_id) as connection:
+                edit_info(connection, task.name, day, int(new_task_rate), False)
 
             task.save()
-        return redirect(f'/user_home_page/{encoded_id}')
+        return redirect(f'/user_home_page/{encoded_id}/{day}')
 
     return render(request, 'todolist/edit_page.html',
-                  {"day": today_todolist.day, "tasks": tasks, "encoded_id": encoded_id})
+                  {"day": day, "tasks": tasks, "encoded_id": encoded_id})
 
 
-def add_page(request, encoded_id):
-    from functions import decode
+def add_page(request, encoded_id, day):
+    from .helping_functions import transform_underscore_to_slash, transform_slash_to_underscore
+
     decoded_id = decode(encoded_id)
     user = User.objects.get(id=decoded_id)
-    day = get_time()
+    day = transform_underscore_to_slash(day)
     today_todolist = ToDoList.objects.get(user=user, day=day)
     tasks = list(today_todolist.task_set.all())
+    day = transform_slash_to_underscore(day)
 
     if request.method == "POST":
         task_name = request.POST.get('name')
@@ -128,71 +153,14 @@ def add_page(request, encoded_id):
         task = Task.objects.create(todolist=today_todolist, name=task_name, time=time,
                                    bool_check=False)
         task.save()
-        return redirect(f'/user_home_page/{encoded_id}')
+        return redirect(f'/user_home_page/{encoded_id}/{day}')
 
     return render(request, 'todolist/add_page.html',
-                  {"day": today_todolist.day, "tasks": tasks, "encoded_id": encoded_id})
+                  {"day": day, "tasks": tasks, "encoded_id": encoded_id})
 
 
-def test(request, encoded_id):
-    from functions import decode
-    file_path = os.path.join(BASE_DIR, 'yahya_file')
+def change_day(request, encoded_id):
+    from .helping_functions import get_day_from_request
 
-    with open(file_path, 'r') as file:
-        lines = [line.strip() for line in file.readlines()]
-        logger.critical(lines)
-        days = len(lines) / 3
-        logger.critical(days)
-        passed_months = (days - 15) // 30
-        remainder_days = (days - 15) % 30
-        logger.critical(passed_months)
-        logger.critical(remainder_days)
-        days_dict = dict()
-
-        t = 0
-        m = 0
-        for month in range(int(passed_months)):
-            j = int(passed_months) * 2
-            for day in range(1 + m, 31 + m):
-                days_dict[f'{day - m}/{6 - passed_months + t}/23'] = [(lines[day + j + 1]),
-                                                                      (lines[day + 2 + j])]
-                j += 2
-            t += 1
-
-            m += 30
-
-        m = int(passed_months) * 30
-        j = 2 * int(passed_months) * 30
-        for day in range(1 + m, 16 + m):
-            days_dict[f'{day - m}/6/23'] = [(lines[day + j + 1]),
-                                            (lines[day + 2 + j])]
-            j += 2
-        logger.critical(days_dict)
-
-        decoded_id = decode(encoded_id)
-        user = User.objects.get(id=decoded_id)
-
-        for day in list(days_dict):
-            try:
-                todolist = ToDoList.objects.create(user=user, day=day)
-                todolist.save()
-                logger.critical('Todolist saved')
-                for finished_task in days_dict[day][0].split(',')[1:-1]:
-                    name = finished_task
-                    if name == 'notion':
-                        name = 'work'
-                    task = Task.objects.create(todolist=todolist, name=name, bool_check=True)
-                    task.save()
-                    logger.critical('Task saved')
-
-                for unfinished_task in days_dict[day][1].split(',')[1:-1]:
-                    name = unfinished_task
-                    if name == 'notion':
-                        name = 'work'
-                    task = Task.objects.create(todolist=todolist, name=name, bool_check=False)
-                    task.save()
-                    logger.critical('Task saved')
-            except django.db.utils.IntegrityError:
-                logger.critical('Task already saved')
-
-    return home_page(request, encoded_id)
+    new_day = get_day_from_request(request)
+    return redirect(f'/user_home_page/{encoded_id}/{new_day}')

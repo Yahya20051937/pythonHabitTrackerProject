@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk, FigureCanvas
 from io import BytesIO
 import base64
 from django.shortcuts import render
+from functions import get_time
 
 from .data_management import get_all_tasks_once, User
 from .tracking_functions import get_habit_days_streak, get_performance_in_last_n_days
@@ -25,7 +26,8 @@ logger = logging.getLogger('habit_tracking')
 
 # Create your views here.
 def tracking_home_page(request, encoded_id):
-    return render(request, 'habit_tracking/tracking_home.html', {'encoded_id': encoded_id})
+    time = get_time(for_url=True)
+    return render(request, 'habit_tracking/tracking_home.html', {'encoded_id': encoded_id, 'time': time})
 
 
 def get_habit_days_streak_view(request, encoded_id):
@@ -47,6 +49,7 @@ def get_performance_graph_view(request, encoded_id):
     from .helping_function import get_todolist_length
     decoded_id = decode(encoded_id)
     todo_lists_length = get_todolist_length(decoded_id)
+    logger.critical(todo_lists_length)
     if request.method == 'POST':
         selected_n = request.POST.get("selected_n")
         graph_coordinates = get_performance_in_last_n_days(decoded_id, int(selected_n))

@@ -5,7 +5,7 @@
 <h3>{{day}}</h3>
 
 
-<form method="POST" action="/add_page/{{encoded_id}}">
+<form method="POST" action="/add_page/{{encoded_id}}/{{day}}">
     {% csrf_token %}
 <div class="task-table-container">
     <table class="task-table">
@@ -17,7 +17,7 @@
         </tr>
         {% for task in tasks %}
 
-            <tr>
+            <tr class="{{ task.rate }}">
                 <th>{{ task.name }}</th>
                 <th>{{ task.starting_time}} - {{task.ending_time }}</th>
                 {% if task.bool_check %}

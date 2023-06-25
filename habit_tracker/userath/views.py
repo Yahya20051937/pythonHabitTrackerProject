@@ -1,5 +1,6 @@
 from django.shortcuts import render
 import random, logging
+from functions import get_time
 from django.contrib.auth.models import User
 from django.contrib.auth import login, authenticate
 from django.shortcuts import redirect
@@ -16,10 +17,11 @@ logger = logging.getLogger('userathlogs')
 def home(request):
     from functions import encode
 
-    return render(request, 'userath/home.html', {'id': encode(12)})
+    return render(request, 'userath/home.html', {'id': encode(11)})
 
 
 def sign_up(request):
+    from database import DataBaseManagement, create_table
     from functions import encode
     if request.method == "POST":
         form = ExtendedUserCreationForm(request.POST)
@@ -28,7 +30,10 @@ def sign_up(request):
             user_id = user.id
             encoded_id = encode(user_id)
             login(request, user)
-            return redirect(f'/user_home/{encoded_id}')
+            with DataBaseManagement(user.id) as connection:
+                create_table(connection)
+            day = get_time(for_url=True)
+            return redirect(f'/user_home_page/{encoded_id}/{day}')
     else:
         form = ExtendedUserCreationForm()
     return render(request, 'registration/register.html', {"form": form})
@@ -36,6 +41,7 @@ def sign_up(request):
 
 def login_view(request):
     from functions import encode
+
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -45,7 +51,8 @@ def login_view(request):
         if user is not None:
             encoded_id = encode(user.id)
             login(request, user)
-            return redirect(f'/user_home_page/{encoded_id}')
+            day = get_time(for_url=True)
+            return redirect(f'/user_home_page/{encoded_id}/{day}')
         else:
             error_message = 'Invalid username or password.'
             return render(request, 'registration/login.html',
