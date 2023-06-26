@@ -33,8 +33,11 @@
 </div>
 </div>
     <div>
-        <label for="name">Task name:</label>
-        <input type="text" id="name" name="name">
+        <select name="name">
+                    {% for habit in habits %}
+                        <option value="{{habit}}">{{habit}}</option>
+                    {% endfor %}
+        </select>
 
         <label for="starting_time">Starting time: </label>
         <input type="time" id="starting_time" name="starting_time" value="00:00:00">

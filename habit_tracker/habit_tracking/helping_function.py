@@ -43,13 +43,14 @@ def sort_by_date(todo_lists, reverse=False):
 
     # logger.critical(len(sorted_list))
     # logger.critical(len(days_list))
-    sorted_list = [tdl for tdl in sorted_list if get_days_difference(get_time(), tdl.day) >= 0]   # this line is used to filter the list, so as only the  lists before this day are analyzed
+    sorted_list = [tdl for tdl in sorted_list if get_days_difference(get_time(),
+                                                                     tdl.day) >= 0]  # this line is used to filter the list, so as only the  lists before this day are analyzed
     return sorted_list
 
 
 def sort_by_replacing(iterable, data_index):
     j = 0
-    while j <= len(iterable):    # this loop is used to compare each item in the iterable with all the other items
+    while j <= len(iterable):  # this loop is used to compare each item in the iterable with all the other items
         j += 1
         index = -1
         for date in iterable:
@@ -120,3 +121,21 @@ def get_days_difference(date1, date2):
     difference += day1 - day2
 
     return difference
+
+
+def get_day_performance(all_tasks):
+    total_rate = get_total_rate(all_tasks)
+    # this list will store each task name, if it has been done or not, and its percentage rate
+    tasks_data = []
+    for task in all_tasks:
+        task_rate_percentage = percentage_formula(total_rate, task.rate)
+        tasks_data.append((task.name, task.bool_check, task_rate_percentage))
+    logger.critical(tasks_data)
+    performance = 0
+
+    for task in tasks_data:
+        logger.critical(task)
+        if task[1] is True:  # if the task has been done, then we add to the performance the task percentage
+            performance += task[2]
+
+    return performance

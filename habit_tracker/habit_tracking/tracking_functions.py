@@ -43,7 +43,7 @@ def get_habit_days_streak(all_tasks_once, habit, decoded_id):
 
 def get_performance_in_last_n_days(decoded_id, n):
     # this function will give a percentage of performance in each day, where the total of task.rate is 100%, and we must figure then the percentage for each task.rate
-    from .helping_function import sort_by_date, get_total_rate, percentage_formula
+    from .helping_function import sort_by_date, get_total_rate, percentage_formula, get_day_performance
     from database import DataBaseManagement, get_info
 
     from .views import logger
@@ -60,21 +60,7 @@ def get_performance_in_last_n_days(decoded_id, n):
             for task in all_tasks:  # get the rate from the database for each task
                 task.rate = get_info(conn, task.name, column='rate')
 
-        total_rate = get_total_rate(all_tasks)
-        # this list will store each task name, if it has been done or not, and its percentage rate
-        tasks_data = []
-        for task in all_tasks:
-            task_rate_percentage = percentage_formula(total_rate, task.rate)
-            tasks_data.append((task.name, task.bool_check, task_rate_percentage))
-        logger.critical(tasks_data)
-        performance = 0
-
-        for task in tasks_data:
-            logger.critical(task)
-            if task[1] is True:  # if the task has been done, then we add to the performance the task percentage
-                performance += task[2]
-
-        # finally, the performance variable will store 100% - sum(tasks_not_finished_percentage)% in it
+        performance = get_day_performance(all_tasks)
         logger.critical(performance)
         performance_dict[all_todo_lists_sorted[day].day] = performance
 
@@ -90,9 +76,6 @@ def track_habit(decoded_id,
     from database import DataBaseManagement, get_info
     from .data_management import get_all_tasks_once
     from .views import logger
-    user = User.objects.get(id=decoded_id)
-
-    logger.critical(task)
 
     performance = 5
 
@@ -106,7 +89,7 @@ def track_habit(decoded_id,
         # if the days streak is bigger than one, then the performance is bigger or equal to 5
         # for each day in the days streak, we increment by a value corresponded to the value of the streak
         for i in range(habit_days_streak):
-            # in the (good) range, we increment by one
+
             if 1 <= habit_days_streak <= 4:
                 performance += 0.5
 

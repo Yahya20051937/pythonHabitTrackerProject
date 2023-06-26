@@ -22,7 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 def home_page(request, encoded_id, day):
     from .helping_functions import modify_performance, get_style_tag, transform_underscore_to_slash, \
-        transform_slash_to_underscore
+        transform_slash_to_underscore, get_image_base64
+    from habit_tracking.helping_function import get_day_performance
     from database import DataBaseManagement, edit_info
     decoded_id = decode(encoded_id)
     day = transform_underscore_to_slash(day)
@@ -41,6 +42,7 @@ def home_page(request, encoded_id, day):
         today_todolist.save()
 
     tasks = list(today_todolist.task_set.all())
+
     modify_performance(decoded_id, tasks)
     style_tag = get_style_tag()  # function provided by CHAT-GPT to style the th tags
 
@@ -62,11 +64,14 @@ def home_page(request, encoded_id, day):
                 task.save()
 
     day = transform_slash_to_underscore(day)
+    day_performance = get_day_performance(
+        tasks)  # this variable will hold the performance until this moment, and will be used in the bar graph
+    image_base64 = get_image_base64(day_performance)
     logger.critical(day)
     return render(request, 'todolist/home_page.html',
                   {"day": day, "tasks": tasks, "encoded_id": encoded_id,
                    'style_tag': style_tag,
-                   'days_range': range(1, 32), 'month_range': range(1, 13), 'year_range': range(1, 30)})
+                   'days_range': range(1, 32), 'month_range': range(1, 13), 'year_range': range(1, 30), 'image_base64':image_base64})
 
 
 def delete_page(request, encoded_id, day):
@@ -134,12 +139,15 @@ def edit_page(request, encoded_id, day):
 
 def add_page(request, encoded_id, day):
     from .helping_functions import transform_underscore_to_slash, transform_slash_to_underscore
+    from database import DataBaseManagement, get_all_tasks
 
     decoded_id = decode(encoded_id)
     user = User.objects.get(id=decoded_id)
     day = transform_underscore_to_slash(day)
     today_todolist = ToDoList.objects.get(user=user, day=day)
     tasks = list(today_todolist.task_set.all())
+    with DataBaseManagement(decoded_id) as conn:
+        user_habits = get_all_tasks(conn)      # this list hold the options that the user can choose as the name of its task
     day = transform_slash_to_underscore(day)
 
     if request.method == "POST":
@@ -156,7 +164,7 @@ def add_page(request, encoded_id, day):
         return redirect(f'/user_home_page/{encoded_id}/{day}')
 
     return render(request, 'todolist/add_page.html',
-                  {"day": day, "tasks": tasks, "encoded_id": encoded_id})
+                  {"day": day, "tasks": tasks, "encoded_id": encoded_id, 'habits':user_habits})
 
 
 def change_day(request, encoded_id):
@@ -164,3 +172,19 @@ def change_day(request, encoded_id):
 
     new_day = get_day_from_request(request)
     return redirect(f'/user_home_page/{encoded_id}/{new_day}')
+
+
+def add_new_habit(request, encoded_id, day):  # this function will be used to let the user add a new habit
+    from database import DataBaseManagement, edit_info
+    from functions import decode
+
+    decoded_id = decode(encoded_id)
+
+    if request.method == 'POST':
+        with DataBaseManagement(decoded_id) as conn:
+            habit_name = request.POST.get('name')
+            habit_rate = int(request.POST.get('rate'))
+            edit_info(conn, day, habit_name, habit_rate)
+        return redirect(f'/user_home_page/{encoded_id}/{day}')
+    return render(request, 'todolist/add_habit.html')
+

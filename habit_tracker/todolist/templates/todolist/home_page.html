@@ -55,6 +55,8 @@
   }
 </style>
 
+<p>Add a new habit <a href="/add_new_habit/{{encoded_id}}/{{day}}">here</a></p>
+
 <form method="POST" action="/change_day/{{encoded_id}}">
     {% csrf_token %}
     <div>
@@ -138,6 +140,7 @@
 <form action="/habit_tracking/{{encoded_id}}">
     <input type="submit" value="Habits tracking">
 </form>
-<li>Test <a href="/test/{{encoded_id}}">here</a></li>
+
+<img src="data:image/png;base64, {{image_base64}}" alt="Bar Graph">
 
 {% endblock %}
